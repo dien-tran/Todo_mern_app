@@ -80,7 +80,7 @@ exports.login = async (req, res) => {
             token,
             user: {
                 id: existUser._id,
-                username: existUser.username,
+                name: existUser.name,
                 email: existUser.email
             }
         });
@@ -93,14 +93,6 @@ exports.login = async (req, res) => {
     }
 };
 
-// Logout Controller: handle user logout by invalidating token or clearing session
-exports.logout = async (req, res) => {
-    try {
-
-    } catch (error) {
-
-    }
-}
 
 // Helper function to generate JWT token
 // Forget Password Controller: find user by email, generate reset token, send reset email
