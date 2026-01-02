@@ -4,7 +4,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
 
-
 // Register Controller 
 exports.register = async (req, res) => {
     try {
@@ -94,16 +93,6 @@ exports.login = async (req, res) => {
     }
 };
 
-
-//Verify Token Controller: verify JWT token validity, verify user existence, send error message
-exports.verifylogin = async (req, res) => {
-    try {
-
-    } catch (error) {
-
-    }
-}
-
 // Logout Controller: handle user logout by invalidating token or clearing session
 exports.logout = async (req, res) => {
     try {
@@ -112,7 +101,6 @@ exports.logout = async (req, res) => {
 
     }
 }
-
 
 // Helper function to generate JWT token
 // Forget Password Controller: find user by email, generate reset token, send reset email
