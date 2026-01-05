@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
 const taskSchema = new mongoose.Schema({
+    // Reference to Plan model - establishes the Task-Plan relationship
     planID: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Plan",
