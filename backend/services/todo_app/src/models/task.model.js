@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const taskSchema = new mongoose.Schema({
-    planID: {
+    planId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Plan",
         required: true
