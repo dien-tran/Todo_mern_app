@@ -1,5 +1,5 @@
-import mongoose from 'mongoose';
-import Plan from '../models/plan.model.js';
+const mongoose = require('mongoose');
+const Plan = require('../models/plan.model');
 
 // Create Plan Controller: Create a new plan 
 exports.createPlan = async (req, res) => {
@@ -73,8 +73,7 @@ exports.getPlans = async (req, res) => {
 // Update Plan Controller: Update a plan status: active or inactive
 exports.updatePlan = async (req, res) => {
     try {
-        const { planId } = req.params; // planId từ URL
-        const { status } = req.body;   // status từ body
+        const { planId, status } = req.body;   // planId, status từ body
         const userId = req.user.userId;
 
         if (!mongoose.Types.ObjectId.isValid(planId)) {

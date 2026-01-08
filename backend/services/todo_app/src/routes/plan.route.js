@@ -7,6 +7,6 @@ const Middleware = require('../middleware/todo.middleware');
 // Plan routes
 router.post('/create', Middleware.verifyToken, planController.createPlan);
 router.get('/get', Middleware.verifyToken, planController.getPlans);
-router.put('/update/:planId/status', Middleware.verifyToken, planController.updatePlan);
+router.put('/update/status', Middleware.verifyToken, planController.updatePlan);
 
 module.exports = router;
