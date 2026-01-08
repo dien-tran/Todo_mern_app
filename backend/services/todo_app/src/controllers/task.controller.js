@@ -1,6 +1,6 @@
-import mongoose from 'mongoose';
-import Task from '../models/task.model.js';
-import Plan from '../models/plan.model.js';
+const mongoose = require('mongoose');
+const Task = require('../models/task.model.js');
+const Plan = require('../models/plan.model.js');
 
 // Create Task Controller: Create a new task
 exports.createTask = async (req, res) => {
@@ -105,7 +105,7 @@ exports.getTasks = async (req, res) => {
 };
 // Update Task Controller: Update task information, validate taskId, make a list of updatable features
 
-exports.updateTaskInfo = async (req, res) => {
+exports.updateTask = async (req, res) => {
     try {
         const userId = req.user.userId;
         const { taskId } = req.params;
