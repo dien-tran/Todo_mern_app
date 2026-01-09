@@ -67,7 +67,7 @@ exports.createTask = async (req, res) => {
 exports.getTasks = async (req, res) => {
     try {
         const userId = req.user.userId;
-        const {planId} = req.params;
+        const {planId} = req.body;
 
         if (!mongoose.Types.ObjectId.isValid(planId)) {
             return res.status(400).json({
@@ -108,7 +108,7 @@ exports.getTasks = async (req, res) => {
 exports.updateTask = async (req, res) => {
     try {
         const userId = req.user.userId;
-        const { taskId } = req.params;
+        const { taskId } = req.body;
 
         //validate taskId
         if(!mongoose.Types.ObjectId.isValid(taskId)){
@@ -189,7 +189,7 @@ exports.updateTask = async (req, res) => {
 exports.deleteTask = async (req, res) => {
     try {
         const userId = req.user.userId;
-        const { taskId } = req.params;
+        const { taskId } = req.body ;
 
         //validate taskId
         if(!mongoose.Types.ObjectId.isValid(taskId)){
