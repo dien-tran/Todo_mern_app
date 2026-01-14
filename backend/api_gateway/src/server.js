@@ -1,48 +1,110 @@
 const express = require('express');
-const { createProxyMiddleware } = require('http-proxy-middleware');
 const cors = require('cors');
-const morgan = require('morgan');
 const helmet = require('helmet');
+const morgan = require('morgan');
 require('dotenv').config();
 
-const PORT = process.env.PORT || 80;
-const AUTH_URL = process.env.AUTH_URL || 'http://localhost:8080'; // set đúng port auth
-const TODO_URL = process.env.TODO_URL || 'http://localhost:8081'; // set đúng port todo_app
+const authMiddleware = require('./middleware/auth');
+const rateLimitMiddleware = require('./middleware/rateLimit');
+const { createProxyHandler } = require('./utils/proxy');
 
 const app = express();
 
+// Middleware
 app.use(helmet());
 app.use(cors());
-app.use(morgan('dev'));
+app.use(morgan('combined'));
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(rateLimitMiddleware);
 
-// forward JSON body when proxying
-function onProxyReqWriteBody(proxyReq, req) {
-  if (!req.body || !Object.keys(req.body).length) return;
-  const bodyData = JSON.stringify(req.body);
-  proxyReq.setHeader('Content-Type', 'application/json');
-  proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
-  proxyReq.write(bodyData);
-}
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    service: 'API Gateway',
+    timestamp: new Date(),
+    uptime: process.uptime()
+  });
+});
 
-app.use('/api/auth', createProxyMiddleware({
-  target: AUTH_URL,
-  changeOrigin: true,
-  pathRewrite: { '^/api/auth': '/api/auth' },
-  onProxyReq: onProxyReqWriteBody
-}));
+// ============ AUTH SERVICE ============
+const authRoutes = express.Router();
 
-app.use(['/api/plans', '/api/tasks'], createProxyMiddleware({
-  target: TODO_URL,
-  changeOrigin: true,
-  pathRewrite: (path) => path, // giữ nguyên path
-  onProxyReq: onProxyReqWriteBody
-}));
+// Public routes - Không cần authentication (đặt TRƯỚC)
+authRoutes.post('/register', createProxyHandler(
+  process.env.AUTH_SERVICE_URL, 
+  '/api/auth/register', 
+  '/auth/register'
+));
 
-app.get('/health', (req, res) => res.json({ ok: true }));
+authRoutes.post('/login', createProxyHandler(
+  process.env.AUTH_SERVICE_URL, 
+  '/api/auth/login', 
+  '/auth/login'
+));
 
+// Protected routes - Cần authentication (đặt SAU)
+authRoutes.use(authMiddleware); // Từ đây trở xuống đều cần auth
+
+authRoutes.all('*', createProxyHandler(
+  process.env.AUTH_SERVICE_URL, 
+  '/api/auth', 
+  '/auth'
+));
+
+app.use('/api/auth', authRoutes);
+
+// ============ TODO SERVICE ============
+const todoRoutes = express.Router();
+todoRoutes.use(authMiddleware); // Tất cả routes đều cần auth
+
+todoRoutes.all('*', createProxyHandler(
+  process.env.TODO_SERVICE_URL, 
+  '/api/todos', 
+  '/todos'
+));
+
+app.use('/api/todos', todoRoutes);
+
+// ============ USER SERVICE (Optional) ============
+// const userRoutes = express.Router();
+// userRoutes.use(authMiddleware);
+// userRoutes.all('*', createProxyHandler(
+//   process.env.USER_SERVICE_URL, 
+//   '/api/users', 
+//   '/users'
+// ));
+// app.use('/api/users', userRoutes);
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({ 
+    error: 'Route not found',
+    path: req.originalUrl,
+    method: req.method,
+    tip: 'Available routes: /api/auth/*, /api/todos/*'
+  });
+});
+
+// Error handling
+app.use((err, req, res, next) => {
+  console.error('[ERROR]', err.stack);
+  res.status(500).json({ 
+    error: 'Internal server error',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+  });
+});
+
+const PORT = process.env.PORT || 8082;
 app.listen(PORT, () => {
-  console.log(`API Gateway listening: http://localhost:${PORT}`);
-  console.log(`Auth -> ${AUTH_URL}, Todo -> ${TODO_URL}`);
+  console.log(`✅ API Gateway running on port ${PORT}`);
+  console.log(`📡 Proxy targets:`);
+  console.log(`   - Auth Service: ${process.env.AUTH_SERVICE_URL}`);
+  console.log(`   - Todo Service: ${process.env.TODO_SERVICE_URL}`);
+  console.log(`🌐 Public routes:`);
+  console.log(`   - POST /api/auth/register`);
+  console.log(`   - POST /api/auth/login`);
+  console.log(`🔒 Protected routes:`);
+  console.log(`   - GET  /api/auth/me (and all other /api/auth/*)`);
+  console.log(`   - ALL  /api/todos/*`);
 });
