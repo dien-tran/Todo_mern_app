@@ -55,16 +55,26 @@ authRoutes.all('*', createProxyHandler(
 app.use('/api/auth', authRoutes);
 
 // ============ TODO SERVICE ============
-const todoRoutes = express.Router();
-todoRoutes.use(authMiddleware); // Tất cả routes đều cần auth
+const planRoutes = express.Router();
+const taskRoutes = express.Router();
+planRoutes.use(authMiddleware); // Tất cả routes đều cần auth
 
-todoRoutes.all('*', createProxyHandler(
+planRoutes .all('*', createProxyHandler(
   process.env.TODO_SERVICE_URL, 
-  '/api/todos', 
-  '/todos'
+  '/api/plans', 
+  '/plans'
 ));
 
-app.use('/api/todos', todoRoutes);
+app.use('/api/plans', planRoutes);
+
+taskRoutes.use(authMiddleware); // Tất cả routes đều cần auth
+taskRoutes.all('*', createProxyHandler(
+  process.env.TODO_SERVICE_URL,   
+  '/api/tasks', 
+  '/tasks'
+));
+
+app.use('/api/tasks', taskRoutes);
 
 // ============ USER SERVICE (Optional) ============
 // const userRoutes = express.Router();

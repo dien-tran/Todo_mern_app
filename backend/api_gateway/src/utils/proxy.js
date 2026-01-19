@@ -15,15 +15,31 @@ const createProxyHandler = (serviceUrl, pathPrefix, targetPrefix = '') => {
 
       console.log(`[PROXY] ${req.method} ${req.originalUrl} -> ${targetUrl}`);
 
-      // Forward request
+      // Chuẩn bị headers
+      const headers = {
+        'Authorization': req.headers.authorization, // Bearer token (nếu có)
+        'Content-Type': req.headers['content-type']  // application/json
+      };
+
+      // Forward userId và user info qua custom headers
+      if (req.user) {
+        headers['X-User-Id'] = req.user.userId || req.user.id;
+        headers['X-User-Email'] = req.user.email;
+        headers['X-User-Role'] = req.user.role || 'user';
+        
+        // DEBUG LOG
+        console.log('[PROXY] Forwarding user info:', {
+          userId: headers['X-User-Id'],
+          email: headers['X-User-Email']
+        });
+      }
+
+      // Forward request by using axios
       const response = await axios({
         method: req.method,
         url: targetUrl,
         data: req.body,
-        headers: {
-          'Authorization': req.headers.authorization,
-          'Content-Type': req.headers['content-type']
-        },
+        headers: headers,
         params: req.query,
         timeout: 10000
       });
